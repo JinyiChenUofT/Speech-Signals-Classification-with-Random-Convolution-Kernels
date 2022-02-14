@@ -8,6 +8,7 @@ from rocket_functions import generate_kernels, apply_kernels
 from sklearn.linear_model import RidgeClassifierCV
 import time
 import pandas as pd
+from sendEmail import sendEmail
 
 class LoadData:
     def __init__(self, kernelNum = 10_000, features = "ppv, sum", dataset = None):
@@ -161,3 +162,4 @@ if __name__ == "__main__":
     load_data_class.rocket()
     #load_data_class.recordResult() # initial 
     load_data_class.recordResult("results.csv")
+    sendEmail()
