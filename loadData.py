@@ -45,9 +45,9 @@ class LoadData:
                     self.audioMNIST_data.append(new_data)
                     #audioMNIST_data.append(np.array(data,dtype=np.float64))
                     self.audioMNIST_labels.append(int(dig))
-
+                    total_files+= 1
                 i+=1
-                total_files+= 1
+                
             #break
         
         read_data_end = time.perf_counter()
