@@ -21,8 +21,8 @@ class LoadData:
         self.apply_kernels_timing = 0
         self.score_timing = 0
         self.mean_accuracy  = 0
-        self.audioMNIST_data= []
-        self.audioMNIST_labels = []
+        self.data= []
+        self.labels = []
 
     def preprocess_data(self, src):
         # loop over recordings
@@ -32,24 +32,18 @@ class LoadData:
 
         read_data_start = time.perf_counter()
         
-        for folder in os.listdir(src):
-            i = 0
-            for filepath in sorted(glob.glob(os.path.join(src,folder, "*.wav"))):
-                if i%2==0:
-                    # infer sample info from name， dig is label(0-9)
-                    dig, _vp, _rep = filepath.rstrip(".wav").split("\\")[-1].split("_")
-                    _fs, data = wavf.read(filepath)
-                    
-                    # reshape all wave files to fixed size
-                    new_data = np.zeros(43953, dtype = np.float64)
-                    new_data[:min(data.shape[0],43953)] = data[:min(data.shape[0],43953)]
-                    self.audioMNIST_data.append(new_data)
-                    #audioMNIST_data.append(np.array(data,dtype=np.float64))
-                    self.audioMNIST_labels.append(int(dig))
-                    total_files+= 1
-                i+=1
-                
-            #break
+
+        i = 0
+        for filepath in sorted(glob.glob(os.path.join(src, "*.wav"))):
+            #if i%2==0:
+            fold, src_file, esc10, target = filepath.rstrip(".wav").split("\\")[-1].split("-")
+            _fs, data = wavf.read(filepath)
+
+            self.data.append(np.array(data,dtype=np.float64))
+            self.labels.append(int(target))
+            total_files+= 1
+            i+=1
+
         
         read_data_end = time.perf_counter()
         read_data_timing = read_data_end-read_data_start
@@ -57,17 +51,19 @@ class LoadData:
 
         self.readFileNum = total_files
         self.read_data_timing = round(read_data_timing,4)
-        #self.rocket(audioMNIST_data, audioMNIST_labels)
+
 
     def rocket(self):
         # split data
-        X_training, X_test, Y_training, Y_test =  train_test_split(np.array(self.audioMNIST_data),np.array(self.audioMNIST_labels), test_size=0.20)
+        X_training, X_test, Y_training, Y_test =  train_test_split(np.array(self.data),np.array(self.labels), test_size=0.20)
 
+
+        print(X_training.shape)
+        print(X_training.shape[0])
 
         print("generating kernels.....")
         generate_start = time.perf_counter()
 
-        #kernels = generate_kernels(np.int64(X_training.shape[-1]), np.int64(10_000))
         kernels = generate_kernels(np.int64(X_training.shape[-1]), np.int64(self.kernelNum))
 
         generate_end = time.perf_counter()
@@ -107,18 +103,6 @@ class LoadData:
         print("------------mean_accuracy: --------")
         print(mean_accuracy)
 
-        # # transform test set and predict
-        # print("predicting.....")
-        # predict_start = time.perf_counter()
-
-        # X_test_transform = apply_kernels(X_test, kernels)
-        # predictions = classifier.predict(X_test_transform)
-
-        # predict_end = time.perf_counter()
-        # predict_timing = predict_end - predict_start
-        # print(f"Predict : {predict_timing:0.4f} seconds\n")
-        # print("------------predictions: --------")
-        # print(predictions)
 
         self.generate_kernel_timing = round(generate_timing,4)
         self.apply_kernels_timing = round(apply_timing,4)
@@ -154,12 +138,12 @@ class LoadData:
             results.to_csv(fileName, mode='a', index=True, header=False)
 
 if __name__ == "__main__":
-    #load_data_class = LoadData(kernelNum= 3_000, features="ppv", dataset="audioMNIST") #[Done] exited with code=0 in 3718.334 seconds
-    load_data_class = LoadData(kernelNum= 10_000, features="ppv", dataset="audioMNIST") #[Done] exited with code=0 in 6441.554 seconds
-    src =os.path.join(os.getcwd(), "data")
-    # dst = "preprocessed_data"
+    load_data_class = LoadData(kernelNum= 10_000, dataset="ESC-50") 
+    #load_data_class = LoadData(kernelNum= 5_000, features="ppv", dataset="ESC-50") 
+    src =os.path.join(os.getcwd(), "ESC-50\\audio")
+
     load_data_class.preprocess_data(src)
     load_data_class.rocket()
     #load_data_class.recordResult() # initial 
     load_data_class.recordResult("results.csv")
-    sendEmail()
+    # sendEmail()
